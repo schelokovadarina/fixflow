@@ -42,10 +42,23 @@ python -m venv .venv
 pip install -r requirements.txt
 copy .env.example .env      # затем отредактируйте .env (SECRET_KEY, пароль БД)
 python manage.py migrate
+python manage.py seed               # справочники + 18 тестовых заявок
+python manage.py createsuperuser    # учётная запись для админки
 python manage.py runserver
 ```
 
-Проверка: http://127.0.0.1:8000/api/health/ — должно вернуть `"status": "ok"` и `"isolation_level": "read committed"`.
+- http://127.0.0.1:8000/api/health/ — проверка: `"status": "ok"`, `"isolation_level": "read committed"`;
+- http://127.0.0.1:8000/admin/ — админка Django.
+
+`python manage.py seed --reset` — удалить все заявки, вернуть начальные остатки склада и создать заявки заново.
+
+## База данных
+
+12 таблиц: справочники `positions`, `departments`, `equipment_types`, `manufacturers`, `request_statuses`, `work_types`, `parts`; основные `employees`, `equipment`, `repair_requests`; связи M:N `request_works`, `request_parts`.
+
+Ограничения целостности заданы на уровне БД (CHECK): `priority` 1..3, `version >= 1`, непустое `description`, `completed_at >= created_at`, `qty > 0`, `stock_qty >= 0`, цены `>= 0`.
+
+Номер заявки `REQ-<год>-<6 цифр>` берётся из последовательности PostgreSQL `repair_request_number_seq` — `nextval()` атомарна, поэтому параллельное создание заявок не даёт дублей.
 
 ### 3. Клиент (fixflowclient)
 
