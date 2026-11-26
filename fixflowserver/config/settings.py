@@ -132,11 +132,25 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "EXCEPTION_HANDLER": "config.exceptions.api_exception_handler",
+    # Разграничение доступа в рамках проекта не требуется: API открыт.
+    # Без SessionAuthentication DRF не требует CSRF-токен, даже если
+    # в браузере открыта сессия админки (фронтенд и админка на одном хосте).
+    "DEFAULT_AUTHENTICATION_CLASSES": [],
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
+    "UNAUTHENTICATED_USER": None,
 }
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "FixFlow API",
-    "DESCRIPTION": "Учёт ремонта оборудования предприятия",
+    "DESCRIPTION": (
+        "Учёт ремонта оборудования предприятия.\n\n"
+        "**Асинхронные эндпоинты** (async-вью Django с async ORM, в этой схеме не показаны, "
+        "т.к. это не DRF-вью):\n\n"
+        "* `GET /api/requests/active/?limit=30` — активные заявки (асинхронное чтение);\n"
+        "* `POST /api/requests/create/` — создание заявки (асинхронная вставка). Тело JSON: "
+        "`equipment`, `created_by`, `description`, `priority` (1..3), `engineer` (необяз.)."
+    ),
     "VERSION": "1.0.0",
 }
 

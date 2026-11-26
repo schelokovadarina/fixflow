@@ -52,6 +52,10 @@ python manage.py runserver
 
 `python manage.py seed --reset` — удалить все заявки, вернуть начальные остатки склада и создать заявки заново.
 
+### 3. Клиент (fixflowclient)
+
+_Будет добавлено на этапе 3._
+
 ## База данных
 
 12 таблиц: справочники `positions`, `departments`, `equipment_types`, `manufacturers`, `request_statuses`, `work_types`, `parts`; основные `employees`, `equipment`, `repair_requests`; связи M:N `request_works`, `request_parts`.
@@ -60,9 +64,27 @@ python manage.py runserver
 
 Номер заявки `REQ-<год>-<6 цифр>` берётся из последовательности PostgreSQL `repair_request_number_seq` — `nextval()` атомарна, поэтому параллельное создание заявок не даёт дублей.
 
-### 3. Клиент (fixflowclient)
+## REST API
 
-_Будет добавлено на этапе 3._
+Документация Swagger: http://127.0.0.1:8000/api/docs/ (схема OpenAPI — `/api/schema/`).
+
+| Ресурс | URL | Методы |
+|---|---|---|
+| Заявки | `/api/requests/` | GET (фильтры `status`, `engineer`, `priority`, `active`, `search`), PATCH, DELETE |
+| Карточка заявки | `/api/requests/{id}/` | GET — с работами, запчастями и стоимостью |
+| **Активные заявки (async)** | `/api/requests/active/` | GET — асинхронное чтение |
+| **Создание заявки (async)** | `/api/requests/create/` | POST — асинхронная вставка |
+| Работы / запчасти по заявке | `/api/request-works/`, `/api/request-parts/` | CRUD, фильтр `request` |
+| Справочники | `/api/equipment/`, `/api/employees/`, `/api/parts/`, `/api/work-types/`, `/api/equipment-types/`, `/api/manufacturers/`, `/api/positions/`, `/api/departments/` | CRUD |
+| Статусы | `/api/statuses/` | GET (только чтение) |
+
+В ответах связанные данные отдаются названиями: `equipment_name`, `status_name`, `engineer_name`, `created_by_name`, `type_name`, `manufacturer_name` и т.д. Связанные таблицы подгружаются через `select_related` / `prefetch_related`: список заявок — один SQL-запрос независимо от числа строк.
+
+Асинхронные вью требуют ASGI-сервера. Для разработки подходит `runserver`, в проде — uvicorn:
+
+```powershell
+uvicorn config.asgi:application --port 8000
+```
 
 ## Развёртывание
 
